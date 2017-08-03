@@ -48,7 +48,8 @@ int main(int argc, char **argv) {
 					std::cout << "Got a unkown command" << std::endl;
 			}
 
-			delete cmd;
+			// TODO need to fix this, crash on TX1
+			// delete cmd;
 		}
 	}
 

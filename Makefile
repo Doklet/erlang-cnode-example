@@ -13,7 +13,7 @@ bin/%.beam:	src/erl/%.erl
 
 compile:
 	mkdir -p bin
-	g++ -o bin/cppnodeserver -I$(OTPROOT)/include -L$(OTPROOT)/lib src/cpp/CommHandler.cpp src/cpp/CommandHandler.cpp src/cpp/main.cpp $< -lerl_interface -lei -lpthread
+	g++ -std=c++11 -o bin/cppnodeserver -I$(OTPROOT)/include -L$(OTPROOT)/lib src/cpp/CommHandler.cpp src/cpp/CommandHandler.cpp src/cpp/main.cpp $< -lerl_interface -lei -lpthread
 
 clean:
 	rm -rf bin
