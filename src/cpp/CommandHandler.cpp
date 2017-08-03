@@ -11,20 +11,20 @@ void CommandHandler::AddCommand(Command* command) {
 
 	// TODO need to make this one thread safe
 
-	std::cout<< "CommandHandler add command \n";
-
 	return this->mCommands.push(command);
 }
 
 Command* CommandHandler::GetNextCommand() {
 
-// TODO need to make this one thread safe
-
-  std::cout<< "CommandHandler getNext command \n";
+	// TODO need to make this one thread safe
 
   if (!this->mCommands.empty()) {
 
-    return this->mCommands.front();
+    Command* front = this->mCommands.front();
+
+    this->mCommands.pop();
+
+    return front;
   }
 
   return NULL;

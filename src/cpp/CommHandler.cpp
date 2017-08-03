@@ -14,6 +14,8 @@
 
 #define BUFSIZE 1000
 
+#pragma GCC diagnostic ignored "-Wwrite-strings"
+
 CommHandler::CommHandler(CommandHandler* commandHandler)
 {
   assert(commandHandler != NULL);
@@ -29,7 +31,7 @@ CommHandler::~CommHandler()
 
 bool CommHandler::Open(int port)
 {
-  std::cout << "CommHandler open and publish port: " << port << std::endl;
+  std::cout << "CommHandler start open and publish port: " << port << std::endl;
 
 	this->mPort = port;
 
@@ -44,6 +46,10 @@ bool CommHandler::Open(int port)
 
 	if (erl_publish(this->mPort) == -1)
   	erl_err_quit("erl_publish");
+
+  std::cout << "CommHandler open completed " << std::endl;
+
+  return true;
 }
 
 void CommHandler::Close()
@@ -92,9 +98,9 @@ void CommHandler::Listen()
 
           std::cout << path <<std::endl;
 
-          RecordCommand* recCmd = new RecordCommand();
-          recCmd->recordPath = new std::string(path);
+          RecordCommand* recCmd = new RecordCommand(path);
 
+          Command *cmd = new Command(recCmd);
 
           this->mCommandHandler->AddCommand(cmd);
 
@@ -109,8 +115,9 @@ void CommHandler::Listen()
 
           std::cout << path;
           
-          PredictCommand* cmd = new PredictCommand();
-          cmd->filePath = new std::string(path);
+          PredictCommand* predictCmd = new PredictCommand(path);
+
+          Command* cmd = new Command(predictCmd);
 
           this->mCommandHandler->AddCommand(cmd);
 

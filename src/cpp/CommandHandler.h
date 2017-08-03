@@ -5,31 +5,47 @@
 #include <string>
 
 enum CommandType {
-	RECORD = 0,
-	PREDICT = 1
+	RECORD,
+	PREDICT
 };
 
 struct RecordCommand
 {
-	std::string *recordPath;
+	RecordCommand(const char* path) {
+		this->recordPath = std::string(path);
+	}
+
+	std::string recordPath;
 };
 
 struct PredictCommand
 {
-	std::string *filePath;
+	PredictCommand(const char* path) {
+		this->filePath = std::string(path);
+	}
+
+	std::string filePath;
 };
 
 struct Command
 {
-	Command(RecordCommand cmd) {
-		this.type = CommandType.RECORD;
+	Command(RecordCommand* cmd) {
+		this->type = RECORD;
 		this->recordCommand = cmd;
 	};
 
-	Command(PredictCommand cmd) {
-		this.type = CommandType.PREDICT;
+	Command(PredictCommand* cmd) {
+		this->type = PREDICT;
 		this->predictCommand = cmd;
 	};
+
+	~Command() {
+		if (recordCommand != NULL)
+			delete recordCommand;
+		
+		if (predictCommand != NULL)
+			delete predictCommand;
+	}
 
 	CommandType type;
 	RecordCommand* recordCommand;
