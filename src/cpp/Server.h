@@ -1,5 +1,5 @@
-#ifndef __COMMHANDLER_H__
-#define __COMMHANDLER_H__
+#ifndef __SERVER_H__
+#define __SERVER_H__
 
 #include <queue>
 #include "erl_interface.h"
@@ -9,17 +9,21 @@
 
 /**
  */
-class CommHandler
+class Server
 {
 public:
 
-	CommHandler(CommandHandler* commandHandler);
-	~CommHandler();
+	Server(CommandHandler* commandHandler);
+	~Server();
 
+	/*
+		Used by the command communication, FIXME seperate class better!
+	*/
 	bool Open(int port);
 	void Close();
-
 	void Listen();
+
+	// void StartListenForEvents();
 	
 private:
 

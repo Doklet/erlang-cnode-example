@@ -6,8 +6,10 @@
 #include <iostream>
 #include <assert.h>
 #include <string.h>
+#include <thread>
+#include <chrono>
 
-#include "CommHandler.h"
+#include "Server.h"
 
 #include "erl_interface.h"
 #include "ei.h"
@@ -16,7 +18,7 @@
 
 #pragma GCC diagnostic ignored "-Wwrite-strings"
 
-CommHandler::CommHandler(CommandHandler* commandHandler)
+Server::Server(CommandHandler* commandHandler)
 {
   assert(commandHandler != NULL);
 
@@ -25,39 +27,39 @@ CommHandler::CommHandler(CommandHandler* commandHandler)
   this->mLoop = true;
 }
 
-CommHandler::~CommHandler()
+Server::~Server()
 {
 }
 
-bool CommHandler::Open(int port)
+bool Server::Open(int port)
 {
-  std::cout << "CommHandler start open and publish port: " << port << std::endl;
+  std::cout << "[Server] begin open and publish port: " << port << std::endl;
 
 	this->mPort = port;
 
 	erl_init(NULL, 0);
 
 	if (erl_connect_init(1, "secretcookie", 0) == -1)
-  	erl_err_quit("erl_connect_init");
+  	erl_err_quit("[Server] erl_connect_init");
 
 	/* Make a listen socket */
 	if ((this->mListen = this->SetupSocket(this->mPort)) <= 0)
-  	erl_err_quit("my_listen");
+  	erl_err_quit("[Server] SetupSocket");
 
 	if (erl_publish(this->mPort) == -1)
-  	erl_err_quit("erl_publish");
+  	erl_err_quit("[Server] erl_publish");
 
-  std::cout << "CommHandler open completed " << std::endl;
+  std::cout << "[Server] open completed " << std::endl;
 
   return true;
 }
 
-void CommHandler::Close()
+void Server::Close()
 {
 
 }
 
-void CommHandler::Listen()
+void Server::Listen()
 {
 	int got;
 	unsigned char buf[BUFSIZE];              /* Buffer for incoming message */
@@ -66,20 +68,20 @@ void CommHandler::Listen()
 
   ETERM *fromp, *tuplep, *fnp, *argp, *resp;
 
-  std::cout << "CommHandler start listen for connections" << std::endl;
+  std::cout << "[Server] start listen for connections" << std::endl;
 
   while (this->mLoop) {
 	  if ((this->mFD = erl_accept(this->mListen, &this->mConn)) == ERL_ERROR)
-	    erl_err_quit("erl_accept");
+	    erl_err_quit("[Server] erl_accept");
 
-	  std::cout << "CommHandler connected to " << this->mConn.nodename << std::endl;
+	  std::cout << "[Server] connected to " << this->mConn.nodename << std::endl;
 
 
     got = erl_receive_msg(this->mFD, buf, BUFSIZE, &emsg);
     if (got == ERL_TICK) {
       /* ignore */
     } else if (got == ERL_ERROR) {
-      std::cout << "error received, listening now" << std::endl;
+      std::cout << "[Server] error received, listening now" << std::endl;
       //loop = 0;
     } else {
 
@@ -98,13 +100,25 @@ void CommHandler::Listen()
 
           std::cout << path <<std::endl;
 
-          RecordCommand* recCmd = new RecordCommand(path);
+          Command* cmd = mCommandHandler->CreateRecordCommand(path);
 
-          Command *cmd = new Command(recCmd);
+          CommandResult* result = NULL;
+          while (result == NULL) {
+            result = this->mCommandHandler->GetNextResult();
 
-          this->mCommandHandler->AddCommand(cmd);
+            std::this_thread::sleep_for (std::chrono::milliseconds(30));
+          }
 
-          resp = erl_format("{cnode, ~b}", path);
+          if (result->command == cmd) {
+            resp = erl_format("{cnode, ~b}", result->result.c_str());
+          } else {
+            // TODO need to handle this better should probarbly just close the socket without response?
+            resp = erl_format("{cnode, ~b}", "FATAL ERROR COMMAND RESULT MISSMATCH");
+          }
+
+          // Delete cause a Segmentation fault
+
+          // mCommandHandler->DeleteResult(result);
 
         } if (strncmp(ERL_ATOM_PTR(fnp), "predict", 3) == 0) {
 
@@ -115,13 +129,25 @@ void CommHandler::Listen()
 
           std::cout << path;
           
-          PredictCommand* predictCmd = new PredictCommand(path);
+          Command* cmd = mCommandHandler->CreatePredictCommand(path);
 
-          Command* cmd = new Command(predictCmd);
+          CommandResult* result = NULL;
+          while (result == NULL) {
+            result = this->mCommandHandler->GetNextResult();
 
-          this->mCommandHandler->AddCommand(cmd);
+            std::this_thread::sleep_for (std::chrono::seconds(1));
+          }
 
-          resp = erl_format("{cnode, ~b}", path);
+          if (result->command == cmd) {
+            resp = erl_format("{cnode, ~b}", result->result.c_str());
+          } else {
+            // TODO need to handle this better should probarbly just close the socket without response?
+            resp = erl_format("{cnode, ~b}", "FATAL ERROR COMMAND RESULT MISSMATCH");
+          }
+
+          // Segmentation fault
+          // mCommandHandler->DeleteResult(result);
+
         } else if (strncmp(ERL_ATOM_PTR(fnp), "foo", 3) == 0) {
 
       	  // res = foo(ERL_INT_VALUE(argp));
@@ -142,10 +168,10 @@ void CommHandler::Listen()
     }
   } /* while */
 
-  std::cout << "CommHandler shutting down" << std::endl;
+  std::cout << "[Server] Server shutting down" << std::endl;
 }
 
-int CommHandler::SetupSocket(int port) {
+int Server::SetupSocket(int port) {
   int listen_fd;
   struct sockaddr_in addr;
   int on = 1;

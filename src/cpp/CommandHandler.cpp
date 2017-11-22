@@ -4,15 +4,47 @@
 
 void CommandHandler::Ping() {
 
-	std::cout<< "CommandHandler Pong \n";	
+	std::cout<< "CommandHandler Pong \n";
 }
 
-void CommandHandler::AddCommand(Command* command) {
+Command* CommandHandler::CreateRecordCommand(const char *path){
+
+	RecordCommand* recordCmd = new RecordCommand(path);
+
+	Command* cmd = new Command(recordCmd);
+
+	this->mCommands.push(cmd);
+
+	return cmd;
+}
+
+Command* CommandHandler::CreatePredictCommand(const char *path){
+
+	PredictCommand* predictCmd = new PredictCommand(path);
+
+	Command* cmd = new Command(predictCmd);
+
+	this->mCommands.push(cmd);
+
+	return cmd;
+}
+
+CommandResult* CommandHandler::CreateResult(Command* command, const char* result) {
 
 	// TODO need to make this one thread safe
 
-	return this->mCommands.push(command);
+	CommandResult* cmdResult = new CommandResult(command, result);
+
+	this->mResults.push(cmdResult);
+
+	return cmdResult;
 }
+
+void CommandHandler::DeleteResult(CommandResult* result) {
+	delete result;
+	result = NULL;
+}
+
 
 Command* CommandHandler::GetNextCommand() {
 
@@ -29,3 +61,20 @@ Command* CommandHandler::GetNextCommand() {
 
   return NULL;
 }
+
+CommandResult* CommandHandler::GetNextResult() {
+
+	// TODO need to make this one thread safe
+
+  if (!this->mResults.empty()) {
+
+    CommandResult* front = this->mResults.front();
+
+    this->mResults.pop();
+
+    return front;
+  }
+
+  return NULL;
+}
+

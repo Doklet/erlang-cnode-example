@@ -40,16 +40,30 @@ struct Command
 	};
 
 	~Command() {
-		if (recordCommand != NULL)
-			delete recordCommand;
-		
-		if (predictCommand != NULL)
-			delete predictCommand;
-	}
+		delete recordCommand;
+		recordCommand = NULL;
+		delete predictCommand;
+		predictCommand = NULL;
+	};
 
 	CommandType type;
 	RecordCommand* recordCommand;
 	PredictCommand* predictCommand;
+};
+
+struct CommandResult
+{
+	CommandResult(Command* cmd, const char* result) {
+		this->command = cmd;
+		this->result = std::string(result);
+	};
+
+	~CommandResult() {
+		delete command;
+	};
+
+	Command* command;
+	std::string result;
 };
 
 /**
@@ -60,13 +74,19 @@ public:
 
 	void Ping();
 
-	void AddCommand(Command* command);
+	Command* CreateRecordCommand(const char *filePath);
+	Command* CreatePredictCommand(const char *filePath);
+
+	CommandResult* CreateResult(Command* command, const char* result);
+	void DeleteResult(CommandResult* result);
 
 	Command* GetNextCommand();
+	CommandResult* GetNextResult();
 
 private:
 
   	std::queue<Command*> mCommands;
+  	std::queue<CommandResult*> mResults;
 };
 
 #endif

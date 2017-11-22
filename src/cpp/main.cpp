@@ -3,19 +3,35 @@
 #include <chrono>
 #include <pthread.h>
 
-#include "CommHandler.h"
+#include "Server.h"
+#include "Client.h"
 
-void *spawnCommHandler(void * arg) {
+void *spawnServer(void * arg) {
 
 	CommandHandler *commandHandler = (CommandHandler*)arg;
 
-	CommHandler* comm = new CommHandler(commandHandler);
+	Server* server = new Server(commandHandler);
 
-	comm->Open(3456);
+	server->Open(3457);
 
-	comm->Listen();
+	server->Listen();
 
-	delete comm;
+	delete server;
+
+	return NULL;
+}
+
+void *spawnClient(void * arg) {
+
+	EventHandler *eventHandler = (EventHandler*)arg;
+
+	Client* client = new Client("Camera0", eventHandler);
+
+	client->Connect();
+
+	client->StartListenForEvents();
+
+	delete client;
 
 	return NULL;
 }
@@ -23,37 +39,68 @@ void *spawnCommHandler(void * arg) {
 int main(int argc, char **argv) {
 
 	CommandHandler* commandHandler = new CommandHandler();
+	EventHandler* eventHandler = new EventHandler();
 
-	pthread_t t;
+	pthread_t server_t, client_t;
 	
-	pthread_create(&t, NULL, spawnCommHandler, (void *)commandHandler);
+	// pthread_create(&server_t, NULL, spawnServer, (void *)commandHandler);
+	pthread_create(&client_t, NULL, spawnClient, (void *)eventHandler);
 
-	std::cout << "Await commands \n" << std::endl;
+	std::cout << "Going into sleep before first batch \n\r";
 
-	while (true) {
+	std::this_thread::sleep_for (std::chrono::milliseconds(10000));
 
-		std::this_thread::sleep_for (std::chrono::seconds(5));
+	eventHandler->CreateSystemReadyEvent();
 
-		if (Command* cmd = commandHandler->GetNextCommand()) {
-			switch (cmd->type) {
-				case RECORD:
-					std::cout << "Got a record command\n";
-					std::cout << "recordPath: " << cmd->recordCommand->recordPath << std::endl;
-					break;
-				case PREDICT:
-					std::cout << "Got a predict command:\n" << std::endl;
-					std::cout << "filePath: " << cmd->predictCommand->filePath << std::endl;
-					break;
-				default:
-					std::cout << "Got a unkown command" << std::endl;
-			}
+	std::cout << "Sending first batch \n\r";
 
-			// TODO need to fix this, crash on TX1
-			// delete cmd;
-		}
+	for (int i = 0; i < 10; ++i)
+	{
+		/* code */
+		eventHandler->CreateItemClassifiedEvent("My event", std::list<Label>());
 	}
 
-	std::cout << "Program done" << std::endl;
+	std::cout << "Sending second batch \n\r";
+
+	std::this_thread::sleep_for (std::chrono::milliseconds(10000));
+
+	for (int i = 0; i < 10; ++i)
+	{
+		/* code */
+		eventHandler->CreateItemClassifiedEvent("My event", std::list<Label>());
+	}
+
+	std::cout << "Going into sleep \n\r";
+
+	std::this_thread::sleep_for (std::chrono::milliseconds(1000));
+
+	// while (true) {
+
+	// 	std::this_thread::sleep_for(std::chrono::milliseconds(30));
+
+	// 	if (Command* cmd = commandHandler->GetNextCommand()) {
+	// 		switch (cmd->type) {
+	// 			case RECORD:
+	// 				std::cout << "Got a record command\n\r";
+	// 				std::cout << "recordPath: " << cmd->recordCommand->recordPath << std::endl;
+	// 				commandHandler->CreateResult(cmd, "Record result");
+	// 				break;
+	// 			case PREDICT:
+	// 				std::cout << "Got a predict command:\n\r";
+	// 				std::cout << "filePath: " << cmd->predictCommand->filePath << std::endl;
+	// 				//commandHandler->CreateResult(cmd, "Predict result");
+	// 				eventHandler->CreateItemClassifiedEvent("My event", std::list<Label>());
+	// 				break;
+	// 			default:
+	// 				std::cout << "Got a unkown command\n\r";
+	// 		}
+
+	// 		// TODO need to fix this, crash on TX1
+	// 		// delete cmd;
+	// 	}
+	// }
+
+	std::cout << "Program done \n\r";
 
 	return 0;
 }
