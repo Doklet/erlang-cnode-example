@@ -80,6 +80,38 @@ void Client::StartListenForEvents() {
 			  	erl_free_term(tuple);
 			  	erl_free_term(args);
 
+		  	} else if (event->type == PRODUCT_ENTER) {
+		  		//{ready, "Camera1"}
+		  		ETERM *arr[2], *arrl[1];
+				arr[0] = erl_mk_atom("enter");
+				arr[1] = erl_mk_string(mDeviceId.c_str());
+				ETERM* tuple = erl_mk_tuple(arr, 2);
+				arrl[0] = tuple;
+				ETERM* args = erl_mk_list(arrl, 1);
+
+			  	response = erl_rpc(this->mFD, HANDLER, HANDLER_FUNCTION, args);
+
+			  	erl_free_term(arr[0]);
+			  	erl_free_term(arr[1]);
+			  	erl_free_term(tuple);
+			  	erl_free_term(args);
+
+		  	} else if (event->type == PRODUCT_LEAVE) {
+		  		//{ready, "Camera1"}
+		  		ETERM *arr[2], *arrl[1];
+				arr[0] = erl_mk_atom("leave");
+				arr[1] = erl_mk_string(mDeviceId.c_str());
+				ETERM* tuple = erl_mk_tuple(arr, 2);
+				arrl[0] = tuple;
+				ETERM* args = erl_mk_list(arrl, 1);
+
+			  	response = erl_rpc(this->mFD, HANDLER, HANDLER_FUNCTION, args);
+
+			  	erl_free_term(arr[0]);
+			  	erl_free_term(arr[1]);
+			  	erl_free_term(tuple);
+			  	erl_free_term(args);
+
 		  	} else if (event->type == CLASSIFICATION) {
 				//{classification, "Camera1", 1, "good", 0.95}
 				ETERM *arr[5], *arrl[1];

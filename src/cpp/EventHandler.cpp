@@ -13,6 +13,29 @@ Event* EventHandler::CreateSystemReadyEvent()
 	return event;
 }
 
+Event* EventHandler::CreateProductEnterEvent()
+{
+	Event* event = new Event();
+	event->type = EventType::PRODUCT_ENTER;
+	event->enter = new ProductEnter();
+
+	this->mEvents.push(event);
+
+	return event;
+}
+
+
+Event* EventHandler::CreateProductLeaveEvent()
+{
+	Event* event = new Event();
+	event->type = EventType::PRODUCT_LEAVE;
+	event->leave = new ProductLeave();
+
+	this->mEvents.push(event);
+
+	return event;
+}
+
 Event* EventHandler::CreateItemClassifiedEvent(const char *name, std::list<Label> labels)
 {
 	assert(name != NULL);
@@ -33,16 +56,28 @@ void EventHandler::DeleteEvent(Event* event)
 {
 	if (event != NULL)
 	{
-		if (event->classification != NULL)
-		{
-			delete event->classification;
-			event->classification = NULL;
-		}
-
 		if (event->ready != NULL)
 		{
 			delete event->ready;
 			event->ready = NULL;
+		}
+
+		if (event->enter != NULL)
+		{
+			delete event->enter;
+			event->enter = NULL;
+		}
+
+		if (event->leave != NULL)
+		{
+			delete event->leave;
+			event->leave = NULL;
+		}
+
+		if (event->classification != NULL)
+		{
+			delete event->classification;
+			event->classification = NULL;
 		}
 
 		delete event;
@@ -53,16 +88,16 @@ void EventHandler::DeleteEvent(Event* event)
 Event* EventHandler::GetNextEvent()
 {
 
-	// TODO need to make this one thread safe
+	// TODO need to make this one thread safe?
 
-  if (!this->mEvents.empty()) {
+	if (!this->mEvents.empty()) {
 
-    Event* front = this->mEvents.front();
+		Event* front = this->mEvents.front();
 
-    this->mEvents.pop();
+		this->mEvents.pop();
 
-    return front;
-  }
+		return front;
+	}
 
-  return NULL;
+	return NULL;
 }

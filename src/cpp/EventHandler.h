@@ -7,8 +7,14 @@
 
 enum EventType {
 	SYSTEM_READY,
+	PRODUCT_ENTER,
+	PRODUCT_LEAVE,
 	CLASSIFICATION
 };
+
+struct SystemReady {};
+struct ProductEnter {};
+struct ProductLeave {};
 
 struct Label
 {
@@ -22,16 +28,13 @@ struct Classification
 	std::list<Label> labels;
 };
 
-struct SystemReady
-{
-	
-};
-
 struct Event
 {
 	EventType 				type;
 
 	struct SystemReady* 	ready;
+	struct ProductEnter* 	enter;
+	struct ProductLeave* 	leave;
 	struct Classification* 	classification;	
 };
 
@@ -41,6 +44,8 @@ class EventHandler
 public:
 
 	Event* 	CreateSystemReadyEvent();
+	Event* 	CreateProductEnterEvent();
+	Event* 	CreateProductLeaveEvent();
 	Event* 	CreateItemClassifiedEvent(const char* name, std::list<Label> labels);
 
 	void 	DeleteEvent(Event* event);
